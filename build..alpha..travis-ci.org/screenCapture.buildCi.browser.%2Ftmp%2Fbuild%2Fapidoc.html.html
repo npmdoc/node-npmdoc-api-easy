@@ -1,0 +1,236 @@
+<html><head></head><body><div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a href="https://github.com/flatiron/api-easy">api-easy (v0.4.0)</a>
+</h1>
+<h4>Fluent (i.e. chainable) syntax for generating vows tests against RESTful APIs.</h4>
+<div class="apidocSectionDiv"><a href="#apidoc.tableOfContents" id="apidoc.tableOfContents"><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.api-easy">module api-easy</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.api-easy.describe">
+            function <span class="apidocSignatureSpan">api-easy.</span>describe
+            <span class="apidocSignatureSpan">(text)</span>
+            </a>
+
+        </li>
+
+        <li>
+
+            <span class="apidocSignatureSpan">string <span class="apidocSignatureSpan">api-easy.</span>version</span>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.api-easy" id="apidoc.module.api-easy">module api-easy</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.api-easy.describe" id="apidoc.element.api-easy.describe">
+        function <span class="apidocSignatureSpan">api-easy.</span>describe
+        <span class="apidocSignatureSpan">(text)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">describe = function (text) {
+  return {
+    //
+    // ### State / Context management:
+    //
+    // * `suite`: The underlying vows suite
+    // * `discussion`: Ordered list containing the set of text to use before each test
+    // * `outgoing`: Shared options to be passed to the `request` module on each test.
+    // * `befores`: Mapping of named functions to execute before each test to modify the
+    //             outgoing request options.
+    // * `options`: Various configuration options for managing nuances of state / scope.
+    // * `paths`: The set of paths representing the location of the current resource /
+    //            API method being tested by this object.
+    // * `batch`: The object literal representing the current batch of vows tests to
+    //            eventually be pass to vows `.addBatch()`.
+    // * `batches`: The set of all batches that have been added to the vows `suite`
+    //              associated with this object.
+    //
+    suite: vows.describe(text),
+    discussion: [],
+    outgoing: {
+      headers: {}
+    },
+    befores: {},
+    options: {},
+    paths: [],
+    batch: {},
+    batches: [],
+
+    //
+    // ### Add and Remove BDD Discussion
+    // Simple pathing for adding contextual description to sets of tests.
+    // Each call to discuss will create an object in the nested vows
+    // structure which has that text as the key in the parent. **e.g.:**
+    //
+    //     APIeasy.describe('your/awesome/api')
+    //             .use('localhost', 8080)
+    //             .discuss('When using your awesome API')
+    //               .discuss('and an awesome resource')
+    //               .path('/awesome-resource')
+    //                 .get().expect(200)
+    //               .undiscuss().unpath()
+    //               .discuss('and a super resource')
+    //               .path('/super-resource')
+    //                 .get().expect(404);
+    //
+    discuss: function (text) {
+      this.discussion.push(text);
+      return this;
+    },
+    undiscuss: function (length) {
+      length = length || 1;
+      this.discussion.splice(-1 * length, length);
+      return this;
+    },
+
+    //
+    // ### Setup Remote API Location / Options
+    // Configure the remote `host`, `port`, and miscellaneous
+    // `options` of the API that this suite is testing.
+    //
+    use: function (host /* [port, options] */) {
+      var args = Array.prototype.slice.call(arguments),
+          options = typeof args[args.length - 1] === 'object' ? args.pop() : {},
+          port = args[1];
+
+      this.host   = host || 'localhost';
+      this.port   = port || 80;
+      this.secure = options.secure || false;
+      this.auth   = options.auth;
+
+      //
+      // **TODO _(indexzero)_:** Setup `this.options` here (i.e. options for the SUITE, not the REQUEST)
+      // _What are useful options to expose?_
+      //
+
+      return this;
+    },
+    //
+    // ### Configure Basic Authentication
+    //
+    authenticate: function (username, password) {
+      this.auth = password ? (username + ':' + password) : username;
+      return this;
+    },
+    unauthenticate: function () {
+      this.auth = null;
+      return this;
+    },
+    //
+    // ### Configure Headers
+    // Manipulate the HTTP headers that are sent to your API using these methods.
+    // They are designed to mimic the node.js core HTTP APIs.
+    //
+    setHeaders: function (headers) {
+      this.outgoing.headers = headers;
+      return this;
+    },
+    setHeader: function (key, value) {
+      this.outgoing.headers[key] = value;
+      return this;
+    },
+    getHeader: function (key) {
+      return this.outgoing.headers[key];
+    },
+    removeHeader: function (key, value) {
+      delete this.outgoing.headers[key];
+      return this;
+    },
+
+    //
+    // ### Manipulate Base Path
+    // Control the base path used for a given test in this suite. Append a path
+    // by calling `.path()`. Remove the last `num` paths from the suite by calling
+    // `.unpath(num)`. Set the root path using `.root(path)`
+    //
+    path: function (uri) {
+      this.paths.push(uri.replace(/^\/|\/$/ig, ''));
+      return ...</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+Here's a sample of the boilerplate code that APIeasy eliminates:
+
+``` js
+var request = require('request'),
+    vows = require('vows'),
+    assert = require('assert');
+
+vows.<span class="apidocCodeKeywordSpan">describe</span>('your/awesome/api').addBatch({
+  "When using your awesome api": {
+    "and your awesome resource": {
+      "A POST to /awesome": {
+        topic: function () {
+          request({
+            uri: 'http://localhost:8080/awesome',
+            method: 'POST',
+...</pre></li>
+    </ul>
+
+
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
+</body></html>
